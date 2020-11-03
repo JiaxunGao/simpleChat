@@ -66,16 +66,94 @@ public class ChatClient extends AbstractClient
    */
   public void handleMessageFromClientUI(String message)
   {
-    try
-    {
-      sendToServer(message);
-    }
-    catch(IOException e)
-    {
-      clientUI.display
-        ("Could not send message to server.  Terminating client.");
-      quit();
-    }
+	if (message.charAt(0)=='#'){
+		
+		String[] info = message.substring(1).split(" ");
+		
+		switch (info[0]) {
+			case "quit": 
+				quit();
+				System.exit(0);
+				break;
+				
+			case "logoff":
+				try{
+					closeConnection();
+				}catch(IOException e)
+			    {
+			    	clientUI.display
+			        ("Problem in loging off.  Terminating client.");
+			    	System.exit(0);
+			    }
+				break;
+				
+			case "sethost":
+				if(!isConnected()) {
+					if(info.length==2) {
+						setHost(info[1]);
+						clientUI.display("Set host successfully to :" + info[1]);
+					}else {
+						clientUI.display("Please provide host paramater.");
+					}
+				}else {
+					clientUI.display("Please logout first.");
+				} 
+				break;
+				
+			case "setport":
+				if(!isConnected()) {
+					if(info.length==2) {
+						setPort(Integer.parseInt(info[1]));
+						clientUI.display("Set port suffessfully to :"+ info[1]);
+					}else {
+						clientUI.display("Please provide port paramater.");
+					}
+				}else {
+					clientUI.display("Please logout first.");
+				}
+				break;
+				
+			case "login":
+				if(!isConnected()) {
+					try{
+						openConnection();
+					}catch(IOException e)
+				    {
+				    	clientUI.display
+				        ("Problem in loging in.  Terminating client.");
+				    	System.exit(0);
+				    }
+					clientUI.display("Successfully logged in.");
+					
+				}else {
+					clientUI.display("You have been logged in.");
+				}
+				break;
+				
+			case "gethost":
+				clientUI.display("Current host is: " + getHost());
+				break;
+				
+			case "getport":
+				clientUI.display("Current port is: " + String.valueOf(getPort()));
+				break;
+		}
+		
+	}else {
+		try
+	    {
+	    	
+	    	sendToServer(message);
+	    }
+	    catch(IOException e)
+	    {
+	    	clientUI.display
+	        ("Could not send message to server.  Terminating client.");
+	      quit();
+	    }
+	}
+	
+    
   }
   
   /**
@@ -89,6 +167,14 @@ public class ChatClient extends AbstractClient
     }
     catch(IOException e) {}
     System.exit(0);
+  }
+  
+
+  
+  public void connectionException(Exception excep) {
+	  clientUI.display("Server closed");
+	  quit();
+
   }
 }
 //End of ChatClient class
