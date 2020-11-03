@@ -26,6 +26,7 @@ public class ChatClient extends AbstractClient
    * the display method in the client.
    */
   ChatIF clientUI; 
+  String loginID;
 
   
   //Constructors ****************************************************
@@ -38,11 +39,12 @@ public class ChatClient extends AbstractClient
    * @param clientUI The interface type variable.
    */
   
-  public ChatClient(String host, int port, ChatIF clientUI) 
+  public ChatClient(String loginID, String host, int port, ChatIF clientUI) 
     throws IOException 
   {
     super(host, port); //Call the superclass constructor
     this.clientUI = clientUI;
+    this.loginID = loginID;
     openConnection();
   }
 
@@ -79,6 +81,7 @@ public class ChatClient extends AbstractClient
 			case "logoff":
 				try{
 					closeConnection();
+					clientUI.display("Successfully logoff.");
 				}catch(IOException e)
 			    {
 			    	clientUI.display
@@ -96,7 +99,7 @@ public class ChatClient extends AbstractClient
 						clientUI.display("Please provide host paramater.");
 					}
 				}else {
-					clientUI.display("Please logout first.");
+					clientUI.display("Please logoff first.");
 				} 
 				break;
 				
@@ -114,20 +117,37 @@ public class ChatClient extends AbstractClient
 				break;
 				
 			case "login":
-				if(!isConnected()) {
-					try{
-						openConnection();
-					}catch(IOException e)
+				if(info.length==2) {
+					try
+				    {
+				    	
+				    	sendToServer(message);
+				    }
+				    catch(IOException e)
 				    {
 				    	clientUI.display
-				        ("Problem in loging in.  Terminating client.");
-				    	System.exit(0);
+				        ("Could not send message to server.  Terminating client.");
+				      quit();
 				    }
-					clientUI.display("Successfully logged in.");
-					
 				}else {
-					clientUI.display("You have been logged in.");
+					if(!isConnected()) {
+						try{
+							openConnection();
+							clientUI.display("Successfully logoff.");
+						}catch(IOException e)
+					    {
+					    	clientUI.display
+					        ("Problem in loging in. Could not find server. Terminating client.");
+					    	System.exit(0);
+					    }
+						clientUI.display("Successfully logged in.");
+						
+					}else {
+						clientUI.display("You have been logged in.");
+					}
+					
 				}
+				
 				break;
 				
 			case "gethost":
@@ -137,6 +157,9 @@ public class ChatClient extends AbstractClient
 			case "getport":
 				clientUI.display("Current port is: " + String.valueOf(getPort()));
 				break;
+				
+			default:
+				clientUI.display("can not recognize command.");
 		}
 		
 	}else {
@@ -175,6 +198,20 @@ public class ChatClient extends AbstractClient
 	  clientUI.display("Server closed");
 	  quit();
 
+  }
+  
+  protected void connectionEstablished() {
+	  try
+	    {
+	    	
+	    	sendToServer("#login "+loginID);
+	    }
+	    catch(IOException e)
+	    {
+	    	clientUI.display
+	        ("Could not send message to server.  Terminating client.");
+	      quit();
+	    }
   }
 }
 //End of ChatClient class

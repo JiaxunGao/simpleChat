@@ -3,6 +3,8 @@
 // license found at www.lloseng.com 
 
 import java.io.*;
+
+import common.ChatIF;
 import ocsf.server.*;
 
 /**
@@ -14,7 +16,11 @@ import ocsf.server.*;
  * @author Fran&ccedil;ois B&eacute;langer
  * @author Paul Holden
  * @version July 2000
+ * 
  */
+
+
+
 public class EchoServer extends AbstractServer 
 {
   //Class variables *************************************************
@@ -24,6 +30,7 @@ public class EchoServer extends AbstractServer
    */
   final public static int DEFAULT_PORT = 5555;
   private int currentClient = 0;
+  ChatIF serverUI;
   
   //Constructors ****************************************************
   
@@ -32,9 +39,10 @@ public class EchoServer extends AbstractServer
    *
    * @param port The port number to connect on.
    */
-  public EchoServer(int port) 
+  public EchoServer(int port,ChatIF serverUI) 
   {
     super(port);
+    this.serverUI=serverUI;
   }
 
   
@@ -49,8 +57,32 @@ public class EchoServer extends AbstractServer
   public void handleMessageFromClient
     (Object msg, ConnectionToClient client)
   {
-    System.out.println("Message received: " + msg + " from " + client);
-    this.sendToAllClients(msg);
+	  
+	  
+	if (msg.toString().charAt(0)=='#') {
+		if (client.getInfo("ID")==null) {
+			String[] info = msg.toString().substring(1).split(" ");
+			
+			client.setInfo("ID", info[1]);
+		}else {
+			
+			try {
+				client.close();
+				client.sendToClient("Can not modify name while logged in.");
+				}
+			catch (IOException e) 
+			{serverUI.display("Problem in close connection to a client.");}
+		}
+		
+		
+	}
+	else {
+		System.out.println("Message received: " + msg + " from " + client);
+		String id = (String)client.getInfo("ID");
+		
+	    this.sendToAllClients(id+"---"+(String)msg);
+	    serverUI.display((String)msg);
+	}
   }
     
   /**
@@ -82,7 +114,7 @@ public class EchoServer extends AbstractServer
    * @param args[0] The port number to listen on.  Defaults to 5555 
    *          if no argument is entered.
    */
-  public static void main(String[] args) 
+  /*public static void main(String[] args) 
   {
     int port = 0; //Port to listen on
 
@@ -105,7 +137,7 @@ public class EchoServer extends AbstractServer
     {
       System.out.println("ERROR - Could not listen for clients!");
     }
-  }
+  }*/
   
   protected void clientConnected(ConnectionToClient client) {
 	  currentClient++;
@@ -119,6 +151,79 @@ public class EchoServer extends AbstractServer
 		    ConnectionToClient client, Throwable exception) {
 	  currentClient--;
 	  System.out.println("A client just disconnected. Total connected client: "+ currentClient);
+  }
+  
+  public void handleMessageFromServerUI(String message) {
+	  
+	  if (message.charAt(0)=='#') {
+		  String[] info = message.substring(1).split(" ");
+		  
+		  switch (info[0]) {
+		  	case "quit":
+		  		try {
+		  			close();
+		  			serverUI.display("Successfully closed server.");
+		  			
+		  		}catch (IOException e) {
+		  			serverUI.display("Problem in quiting. Force quit");
+		  		}
+		  		finally{
+		  			System.exit(0);
+		  		}
+		  		break;
+		  	
+		  	case "stop":
+		  		stopListening();
+		  		serverUI.display("Server listening is stopped");
+		  		break;
+		  		
+		  	case "close":
+		  		try {
+		  			close();
+		  			serverUI.display("Successfully closed server.");
+		  		}catch (IOException e){
+		  			serverUI.display("Problem in closing server.");
+		  		}
+		  		break;
+		  	
+		  	case "start":
+		  		if (!isListening()) {
+		  			try {
+			  			listen();
+			  		}catch (IOException e){
+			  			serverUI.display("Problem in start listening.");
+			  		}
+		  		}else {
+		  			serverUI.display("Server is already istening.");
+		  		}
+		  		break;
+		  	
+		  	case "setport":
+		  		if (!isListening() && getNumberOfClients()==0) {
+		  			if(info.length==2) {
+						setPort(Integer.parseInt(info[1]));
+						serverUI.display("Set host successfully to :" + info[1]);
+					}else {
+						serverUI.display("Please provide port paramater.");
+					}
+		  		}else {
+		  			serverUI.display("Please close server first using command #close.");
+		  		}
+		  		break;
+		  	
+		  	case "getport":
+		  		serverUI.display("Current port is :" + String.valueOf(getPort())  );
+		  		break;
+		  		
+		  	default:
+		  		serverUI.display("Can not recognize command");
+		  }
+		  
+		  
+	  }else {
+		  this.sendToAllClients("SERVER MSG> "+message);
+	  }
+	  
   }
   
 }
