@@ -61,8 +61,8 @@ public class ClientConsole implements ChatIF
     catch(IOException exception) 
     {
       System.out.println("Error: Can't setup connection!"
-                + " Terminating client.");
-      System.exit(1);
+                + " Please use command.");
+      
     }
     
     // Create scanner object to read from console
@@ -87,6 +87,10 @@ public class ClientConsole implements ChatIF
       {
         message = fromConsole.nextLine();
         if (message!=null) {
+        	
+        	
+        	
+        	
         	client.handleMessageFromClientUI(message);
         }
         
@@ -141,7 +145,7 @@ public class ClientConsole implements ChatIF
       port = DEFAULT_PORT;
     }
     ClientConsole chat= new ClientConsole(loginID,host, port);
-    chat.display("Have logged in as: "+ loginID);
+    
     chat.accept();  //Wait for console data
   }
 }

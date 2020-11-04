@@ -45,7 +45,11 @@ public class ChatClient extends AbstractClient
     super(host, port); //Call the superclass constructor
     this.clientUI = clientUI;
     this.loginID = loginID;
-    openConnection();
+    try {
+    	openConnection();
+    }catch (IOException e) {
+    	clientUI.display("No server with this port number " + String.valueOf(port));
+    }
   }
 
   
@@ -75,6 +79,7 @@ public class ChatClient extends AbstractClient
 		switch (info[0]) {
 			case "quit": 
 				quit();
+				clientUI.display("Connection closed. Successfully quitted.");
 				System.exit(0);
 				break;
 				
@@ -111,6 +116,7 @@ public class ChatClient extends AbstractClient
 					}else {
 						clientUI.display("Please provide port paramater.");
 					}
+					
 				}else {
 					clientUI.display("Please logout first.");
 				}
@@ -120,7 +126,7 @@ public class ChatClient extends AbstractClient
 				if(info.length==2) {
 					try
 				    {
-				    	
+				    	openConnection();
 				    	sendToServer(message);
 				    }
 				    catch(IOException e)
@@ -133,14 +139,14 @@ public class ChatClient extends AbstractClient
 					if(!isConnected()) {
 						try{
 							openConnection();
-							clientUI.display("Successfully logoff.");
+							clientUI.display("Successfully login.");
 						}catch(IOException e)
 					    {
 					    	clientUI.display
-					        ("Problem in loging in. Could not find server. Terminating client.");
-					    	System.exit(0);
+					        ("Problem in loging in. Could not find server. ");
+					    	
 					    }
-						clientUI.display("Successfully logged in.");
+						
 						
 					}else {
 						clientUI.display("You have been logged in.");
@@ -196,7 +202,12 @@ public class ChatClient extends AbstractClient
   
   public void connectionException(Exception excep) {
 	  clientUI.display("Server closed");
-	  quit();
+	  try {
+		closeConnection();
+	} catch (IOException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
 
   }
   

@@ -64,10 +64,15 @@ public class EchoServer extends AbstractServer
 			String[] info = msg.toString().substring(1).split(" ");
 			
 			client.setInfo("ID", info[1]);
+			try {
+				client.sendToClient("Have logged in as: "+ info[1]);
+			}catch (IOException e){
+				serverUI.display("Problem in close connection to a client.");
+			}
 		}else {
 			
 			try {
-				client.close();
+				
 				client.sendToClient("Can not modify name while logged in.");
 				}
 			catch (IOException e) 
@@ -75,12 +80,13 @@ public class EchoServer extends AbstractServer
 		}
 		
 		
+		
 	}
 	else {
-		System.out.println("Message received: " + msg + " from " + client);
+		System.out.println("Message received: " + msg + " from " + client.getInfo("ID"));
 		String id = (String)client.getInfo("ID");
 		
-	    this.sendToAllClients(id+"---"+(String)msg);
+	    this.sendToAllClients(id+">"+(String)msg);
 	    serverUI.display((String)msg);
 	}
   }
@@ -142,7 +148,7 @@ public class EchoServer extends AbstractServer
   protected void clientConnected(ConnectionToClient client) {
 	  currentClient++;
 	  
-	  System.out.println("A client has been connected.Total connected client: "+ currentClient);
+	  System.out.println(client.getInfo("ID")+" has been connected.Total connected client: "+ currentClient);
   }
   
 
@@ -150,7 +156,7 @@ public class EchoServer extends AbstractServer
   synchronized protected void clientException(
 		    ConnectionToClient client, Throwable exception) {
 	  currentClient--;
-	  System.out.println("A client just disconnected. Total connected client: "+ currentClient);
+	  System.out.println(client.getInfo("ID")+" just disconnected. Total connected client: "+ currentClient);
   }
   
   public void handleMessageFromServerUI(String message) {
